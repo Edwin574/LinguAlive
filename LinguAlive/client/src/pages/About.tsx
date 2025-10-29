@@ -6,19 +6,28 @@ import { motion } from "framer-motion";
 export default function About() {
   const team = [
     {
-      name: "Dr. Sarah Kimani",
-      role: "Linguistic Researcher",
-      description: "PhD in African Languages, specializing in Ogiek documentation"
+      name: "Kathryn Nkini",
+      title: "Project Lead",
+      linkedin: "https://www.linkedin.com/in/katherin-nkini-n003/",
+      image: "https://media.licdn.com/dms/image/v2/D4D03AQExAbxGyzrrvQ/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1723311778170?e=1763596800&v=beta&t=bK_YEJWTWSYhLkhPzKgXQ5atfr2ykuTbLNA8w4FS8c0"
     },
     {
-      name: "James Korir",
-      role: "Community Liaison",
-      description: "Native Ogiek speaker and cultural preservation advocate"
+      name: "Abigael Mwangi",
+      title: "Cloud Storage",
+      linkedin: "",
+      image: ""
     },
     {
-      name: "Maria Torres",
-      role: "Technical Lead",
-      description: "Software engineer passionate about language technology"
+      name: "Andrew Kiptoo",
+      title: "Database Management",
+      linkedin: "",
+      image: ""
+    },
+    {
+      name: "Edwin Owino",
+      title: "Data Cleaning",
+      linkedin: "https://www.linkedin.com/in/edwinowino/",
+      image: "https://media.licdn.com/dms/image/v2/D4D03AQHF8NIt4LSa9A/profile-displayphoto-scale_400_400/B4DZoaiK1.JcAg-/0/1761381811668?e=1763596800&v=beta&t=6fUDJs7M_MdbFqMjSjQLOSh-89UoZRBhjzqZxXfwYkk"
     }
   ];
 
@@ -156,17 +165,37 @@ export default function About() {
           <h2 className="font-serif text-4xl font-bold text-foreground mb-12 text-center">
             Our Team
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {team.map((member, index) => (
               <Card key={index} className="p-8 text-center hover-elevate" data-testid={`card-team-${index + 1}`}>
-                <div className="w-24 h-24 rounded-full bg-primary/10 mx-auto mb-6 flex items-center justify-center">
-                  <span className="text-3xl font-serif font-bold text-primary">
-                    {member.name.split(' ').map(n => n[0]).join('')}
-                  </span>
-                </div>
-                <h3 className="font-bold text-xl text-foreground mb-2">{member.name}</h3>
-                <p className="text-primary font-medium mb-3">{member.role}</p>
-                <p className="text-muted-foreground text-sm">{member.description}</p>
+                {member.image ? (
+                  <img
+                    src={member.image}
+                    alt={member.name}
+                    className="w-24 h-24 rounded-full object-cover mx-auto mb-6"
+                  />
+                ) : (
+                  <div className="w-24 h-24 rounded-full bg-primary/10 mx-auto mb-6 flex items-center justify-center">
+                    <span className="text-3xl font-serif font-bold text-primary">
+                      {member.name.split(' ').map(n => n[0]).join('')}
+                    </span>
+                  </div>
+                )}
+                {member.linkedin ? (
+                  <a
+                    href={member.linkedin}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="inline-block"
+                  >
+                    <h3 className="font-bold text-xl text-foreground mb-1 underline decoration-muted-foreground/40 underline-offset-4">
+                      {member.name}
+                    </h3>
+                  </a>
+                ) : (
+                  <h3 className="font-bold text-xl text-foreground mb-1">{member.name}</h3>
+                )}
+                <p className="text-primary font-medium">{member.title}</p>
               </Card>
             ))}
           </div>
