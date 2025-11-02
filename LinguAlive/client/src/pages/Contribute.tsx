@@ -26,12 +26,14 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
-import { clientStorage } from "@/lib/localStorage";
+import { apiClient } from "@/lib/apiClient";
 import { themes, ageRanges, genders } from "@shared/schema";
 import { CheckCircle2, Loader2 } from "lucide-react";
 
 const recordingFormSchema = z.object({
+  contributorName: z.string().optional(),
   transcription: z.string().optional(),
+  englishTranslation: z.string().optional(),
   theme: z.string().min(1, "Please select a theme"),
   ageRange: z.string().optional(),
   gender: z.string().optional(),
@@ -49,7 +51,9 @@ export default function Contribute() {
   const form = useForm<RecordingFormData>({
     resolver: zodResolver(recordingFormSchema),
     defaultValues: {
+      contributorName: "",
       transcription: "",
+      englishTranslation: "",
       theme: "",
       ageRange: "",
       gender: "",
@@ -64,31 +68,43 @@ export default function Contribute() {
         throw new Error("No audio recording available");
       }
 
-      // Convert blob to base64 data URL
-      const audioBase64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          if (reader.result) {
-            resolve(reader.result as string);
-          } else {
-            reject(new Error("Failed to read audio file"));
-          }
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(audioBlob);
+      // Create or get contributor first
+      // For now, create a default contributor or get existing one
+      // In a real app, you'd have a contributor selection/creation flow
+      let contributorId: string;
+      
+      try {
+        // Try to create a contributor with form data
+        const contributor = await apiClient.createContributor({
+          contributor_name: data.contributorName || "Anonymous Contributor",
+          age_range: data.ageRange || undefined,
+          gender: data.gender || undefined,
+          location: data.location || undefined,
+        });
+        contributorId = contributor.contributor_id;
+      } catch (error) {
+        // If contributor creation fails, try to get existing ones
+        const contributors = await apiClient.getContributors();
+        if (contributors.length > 0) {
+          contributorId = contributors[0].contributor_id;
+        } else {
+          throw new Error("Failed to create or find contributor");
+        }
+      }
+
+      // Convert blob to File
+      const audioFile = new File([audioBlob], `recording-${Date.now()}.webm`, {
+        type: audioBlob.type || 'audio/webm',
       });
 
-      const recordingData = {
-        audioUrl: audioBase64,
-        transcription: data.transcription || null,
-        theme: data.theme,
-        ageRange: data.ageRange || null,
-        gender: data.gender || null,
-        location: data.location || null,
-        additionalContext: data.additionalContext || null,
-      };
-
-      return await clientStorage.createRecording(recordingData);
+      // Upload recording to backend
+      return await apiClient.createRecording({
+        contributor_id: contributorId,
+        raw_recording: audioFile,
+        ogk_transcription: data.transcription || undefined,
+        eng_transcription: data.englishTranslation || undefined,
+        rec_theme: data.theme,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["recordings"] });
@@ -211,16 +227,53 @@ export default function Contribute() {
                 <div className="space-y-6 pl-11">
                   <FormField
                     control={form.control}
+                    name="contributorName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Your Name (Optional)</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter your name..."
+                            {...field}
+                            data-testid="input-contributor-name"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
                     name="transcription"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Transcription (Optional)</FormLabel>
+                        <FormLabel>Original Transcription (Optional)</FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder="Type what was said in the recording..."
+                            placeholder="Type what was said in the original language (Ogiek)..."
                             className="min-h-24"
                             {...field}
                             data-testid="input-transcription"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="englishTranslation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>English Translation (Optional)</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Type the English translation..."
+                            className="min-h-24"
+                            {...field}
+                            data-testid="input-english-translation"
                           />
                         </FormControl>
                         <FormMessage />

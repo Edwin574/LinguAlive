@@ -13,26 +13,22 @@ import {
 } from "@/components/ui/select";
 import { Search, Loader2, Music } from "lucide-react";
 import { Recording, themes } from "@shared/schema";
-import { clientStorage } from "@/lib/localStorage";
+import { apiClient, transformRecording } from "@/lib/apiClient";
 
 export default function Listen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTheme, setSelectedTheme] = useState<string>("all");
 
   const { data: recordings, isLoading } = useQuery<Recording[]>({
-    queryKey: ["recordings"],
-    queryFn: () => clientStorage.getRecordings(),
+    queryKey: ["recordings", searchQuery],
+    queryFn: () => apiClient.getRecordings({ q: searchQuery || undefined })
+      .then(backendRecordings => backendRecordings.map(transformRecording)),
   });
 
+  // Backend already filters by search query, so only filter by theme client-side
   const filteredRecordings = recordings?.filter((recording) => {
-    const matchesSearch = searchQuery === "" || 
-      recording.transcription?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      recording.theme.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      recording.location?.toLowerCase().includes(searchQuery.toLowerCase());
-    
     const matchesTheme = selectedTheme === "all" || recording.theme === selectedTheme;
-    
-    return matchesSearch && matchesTheme;
+    return matchesTheme;
   });
 
   return (
