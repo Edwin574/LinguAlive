@@ -31,9 +31,9 @@ class Recording(models.Model):
         db_column='contributor_id'
     )
     
-    # Links to Firebase Storage (not actual files)
-    raw_rec_link = models.URLField(max_length=512, blank=True, help_text="Firebase Storage URL for raw recording")
-    clean_rec_link = models.URLField(max_length=512, blank=True, help_text="Firebase Storage URL for clean recording")
+    # File paths for local storage (relative to MEDIA_ROOT)
+    raw_rec_link = models.CharField(max_length=512, blank=True, help_text="Path to raw recording file")
+    clean_rec_link = models.CharField(max_length=512, blank=True, help_text="Path to clean recording file")
     
     # Transcriptions
     ogk_transcription = models.CharField(max_length=10000, blank=True, null=True, help_text="Transcription in original language")
