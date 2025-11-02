@@ -51,23 +51,15 @@ export function Footer() {
             <h4 className="font-semibold text-foreground mb-4">Connect</h4>
             <div className="flex space-x-4">
               <a 
-                href="mailto:contact@lingualive.org" 
+                href="mailto:lingualivehq@gmail.com" 
                 className="text-muted-foreground hover:text-primary transition-colors"
                 data-testid="link-social-email"
               >
                 <Mail className="w-5 h-5" />
               </a>
+             
               <a 
-                href="https://twitter.com/lingualive" 
-                className="text-muted-foreground hover:text-primary transition-colors"
-                target="_blank"
-                rel="noopener noreferrer"
-                data-testid="link-social-twitter"
-              >
-                <Twitter className="w-5 h-5" />
-              </a>
-              <a 
-                href="https://github.com/lingualive" 
+                href="https://github.com/Edwin574/LinguAlive" 
                 className="text-muted-foreground hover:text-primary transition-colors"
                 target="_blank"
                 rel="noopener noreferrer"

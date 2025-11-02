@@ -206,11 +206,13 @@ export default function Contact() {
                     For general inquiries and support
                   </p>
                   <a 
-                    href="mailto:contact@lingualive.org" 
+                    href="mailto:lingualivehq@gmail.com
+" 
                     className="text-primary hover:underline"
                     data-testid="link-email"
                   >
-                    contact@lingualive.org
+                    lingualivehq@gmail.com
+
                   </a>
                 </div>
               </div>
@@ -227,33 +229,18 @@ export default function Contact() {
                     Interested in collaborating with us?
                   </p>
                   <a 
-                    href="mailto:partnerships@lingualive.org" 
+                    href="mailto:lingualivehq@gmail.com
+" 
                     className="text-primary hover:underline"
                     data-testid="link-partnerships"
                   >
-                    partnerships@lingualive.org
-                  </a>
+lingualivehq@gmail.com
+</a>
                 </div>
               </div>
             </Card>
 
-            <Card className="p-6 bg-primary/5 border-primary/20">
-              <h3 className="font-bold text-lg text-foreground mb-3">Office Hours</h3>
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <div className="flex justify-between">
-                  <span>Monday - Friday</span>
-                  <span className="font-medium">9AM - 5PM EAT</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Saturday</span>
-                  <span className="font-medium">10AM - 2PM EAT</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Sunday</span>
-                  <span className="font-medium">Closed</span>
-                </div>
-              </div>
-            </Card>
+            
           </div>
         </div>
       </div>
