@@ -1,8 +1,3 @@
-/**
- * API Client for Django backend
- * 
- * This replaces localStorage-based storage with actual API calls to the Django backend.
- */
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
