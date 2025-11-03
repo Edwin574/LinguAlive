@@ -104,7 +104,26 @@ class RecordingViewSet(viewsets.ModelViewSet):
         # Step 2: Process audio
         clean_filename = f"{recording_id}_clean.wav"
         clean_file_path = os.path.join(clean_dir, clean_filename)
-        duration, sample_rate = process_audio(raw_file_path, clean_file_path, target_sr=16000)
+        try:
+            duration, sample_rate = process_audio(raw_file_path, clean_file_path, target_sr=16000)
+        except ValueError as e:
+            # If processing fails due to format issues, return a user-friendly error
+            return Response(
+                {
+                    "error": "Audio processing failed",
+                    "detail": str(e),
+                    "hint": "Please ensure ffmpeg is installed: brew install ffmpeg (Mac) or apt-get install ffmpeg (Linux)"
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            return Response(
+                {
+                    "error": "Audio processing failed",
+                    "detail": str(e)
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
         
         # Step 3: Store relative paths in database
         raw_rel_path = f"recordings/raw/{raw_filename}"
