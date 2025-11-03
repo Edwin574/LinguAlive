@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { AudioPlayerCard } from "@/components/AudioPlayerCard";
+import { RecordingCard, RecordingViewModel } from "@/components/RecordingCard";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,23 +13,32 @@ import {
 } from "@/components/ui/select";
 import { Search, Loader2, Music } from "lucide-react";
 import { Recording, themes } from "@shared/schema";
-import { apiClient, transformRecording } from "@/lib/apiClient";
+import { apiClient, transformRecording, Paginated } from "@/lib/apiClient";
 
 export default function Listen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTheme, setSelectedTheme] = useState<string>("all");
 
-  const { data: recordings, isLoading } = useQuery<Recording[]>({
-    queryKey: ["recordings", searchQuery],
-    queryFn: () => apiClient.getRecordings({ q: searchQuery || undefined })
-      .then(backendRecordings => backendRecordings.map(transformRecording)),
+  const { data, isLoading } = useQuery<Paginated<Recording>>({
+    queryKey: ["recordings", searchQuery, selectedTheme],
+    queryFn: () => apiClient
+      .getRecordings({
+        q: searchQuery || undefined,
+        theme: selectedTheme && selectedTheme !== "all" ? selectedTheme : undefined,
+      })
+      ,
   });
 
-  // Backend already filters by search query, so only filter by theme client-side
-  const filteredRecordings = recordings?.filter((recording) => {
-    const matchesTheme = selectedTheme === "all" || recording.theme === selectedTheme;
-    return matchesTheme;
-  });
+  // Map backend to view models
+  const items: RecordingViewModel[] | undefined = data?.results.map(r => ({
+    id: r.recording_id,
+    audioUrl: r.clean_recording_url || r.raw_recording_url || "",
+    theme: r.rec_theme,
+    contributorName: r.contributor_name,
+    ogiek: r.ogk_transcription || null,
+    english: r.eng_transcription || null,
+    createdAt: new Date(r.date_submitted),
+  }));
 
   return (
     <motion.div 
@@ -83,7 +92,7 @@ export default function Listen() {
             <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
             <p className="text-muted-foreground">Loading recordings...</p>
           </div>
-        ) : !filteredRecordings || filteredRecordings.length === 0 ? (
+        ) : !items || items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-6">
               <Music className="w-12 h-12 text-primary" />
@@ -111,11 +120,11 @@ export default function Listen() {
         ) : (
           <>
             <div className="mb-6 text-muted-foreground">
-              Showing {filteredRecordings.length} {filteredRecordings.length === 1 ? "recording" : "recordings"}
+              Showing {items.length} {items.length === 1 ? "recording" : "recordings"}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredRecordings.map((recording) => (
-                <AudioPlayerCard key={recording.id} recording={recording} />
+              {items.map((item) => (
+                <RecordingCard key={item.id} item={item} />
               ))}
             </div>
           </>

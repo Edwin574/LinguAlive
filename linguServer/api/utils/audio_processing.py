@@ -33,8 +33,7 @@ def convert_to_wav(input_path: str, output_path: str = None) -> str:
                 output_path
             ],
             check=True,
-            capture_output=True,
-            stderr=subprocess.PIPE
+            capture_output=True
         )
         return output_path
     except subprocess.CalledProcessError as e:

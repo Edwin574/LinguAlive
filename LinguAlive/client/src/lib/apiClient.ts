@@ -26,6 +26,13 @@ interface Recording {
   date_submitted: string;
 }
 
+export interface Paginated<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}
+
 interface CreateContributorData {
   contributor_name: string;
   age_range?: string;
@@ -88,15 +95,16 @@ export const apiClient = {
   },
 
   // Recording endpoints
-  async getRecordings(params?: { q?: string; contributor_id?: string }): Promise<Recording[]> {
+  async getRecordings(params?: { q?: string; contributor_id?: string; theme?: string }): Promise<Paginated<Recording>> {
     const queryParams = new URLSearchParams();
     if (params?.q) queryParams.append('q', params.q);
     if (params?.contributor_id) queryParams.append('contributor_id', params.contributor_id);
+    if (params?.theme) queryParams.append('theme', params.theme);
     
     const queryString = queryParams.toString();
     const endpoint = `/recordings/${queryString ? `?${queryString}` : ''}`;
     
-    return apiRequest<Recording[]>(endpoint);
+    return apiRequest<Paginated<Recording>>(endpoint);
   },
 
   async getRecording(id: string): Promise<Recording> {
@@ -146,10 +154,15 @@ export function transformRecording(recording: Recording): {
   additionalContext?: string | null;
   createdAt: Date;
 } {
+  const ogk = recording.ogk_transcription?.trim();
+  const eng = recording.eng_transcription?.trim();
+  let combinedTranscription: string | null = null;
+  if (ogk && eng) combinedTranscription = `${ogk}  |  EN: ${eng}`;
+  else combinedTranscription = ogk || eng || null;
   return {
     id: recording.recording_id,
     audioUrl: recording.clean_recording_url || recording.raw_recording_url || '',
-    transcription: recording.ogk_transcription || recording.eng_transcription || null,
+    transcription: combinedTranscription,
     theme: recording.rec_theme,
     ageRange: null, // Not in backend model yet
     gender: null, // Not in backend model yet

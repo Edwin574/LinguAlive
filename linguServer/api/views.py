@@ -44,6 +44,7 @@ class RecordingViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         """List recordings with optional search"""
         q = request.query_params.get("q")
+        theme = request.query_params.get("theme")
         qs = self.get_queryset()
         
         if q:
@@ -54,6 +55,10 @@ class RecordingViewSet(viewsets.ModelViewSet):
                 | Q(rec_theme__icontains=q)
                 | Q(contributor__contributor_name__icontains=q)
             )
+        
+        # Filter by theme if provided (exact match)
+        if theme and theme.lower() != "all":
+            qs = qs.filter(rec_theme=theme)
         
         # Filter by contributor if provided
         contributor_id = request.query_params.get("contributor_id")
@@ -104,30 +109,18 @@ class RecordingViewSet(viewsets.ModelViewSet):
         # Step 2: Process audio
         clean_filename = f"{recording_id}_clean.wav"
         clean_file_path = os.path.join(clean_dir, clean_filename)
+        processing_error = None
+        duration = None
         try:
             duration, sample_rate = process_audio(raw_file_path, clean_file_path, target_sr=16000)
-        except ValueError as e:
-            # If processing fails due to format issues, return a user-friendly error
-            return Response(
-                {
-                    "error": "Audio processing failed",
-                    "detail": str(e),
-                    "hint": "Please ensure ffmpeg is installed: brew install ffmpeg (Mac) or apt-get install ffmpeg (Linux)"
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
         except Exception as e:
-            return Response(
-                {
-                    "error": "Audio processing failed",
-                    "detail": str(e)
-                },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            # Graceful fallback: keep DB row with raw link so uploads are tracked
+            processing_error = str(e)
+            clean_file_path = None
         
         # Step 3: Store relative paths in database
         raw_rel_path = f"recordings/raw/{raw_filename}"
-        clean_rel_path = f"recordings/clean/{clean_filename}"
+        clean_rel_path = f"recordings/clean/{clean_filename}" if clean_file_path else ""
         
         # Step 4: Create Recording record with file paths
         recording = Recording.objects.create(
@@ -140,11 +133,11 @@ class RecordingViewSet(viewsets.ModelViewSet):
             rec_theme=serializer.validated_data.get('rec_theme', ''),
             rec_duration=duration,
         )
-        
-        return Response(
-            RecordingSerializer(recording).data,
-            status=status.HTTP_201_CREATED
-        )
+        payload = RecordingSerializer(recording, context=self.get_serializer_context()).data
+        if processing_error:
+            payload["processing_warning"] = "Audio processing failed; saved raw recording only."
+            payload["processing_detail"] = processing_error
+        return Response(payload, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=["get"], url_path='audio/(?P<audio_type>raw|clean)')
     def audio(self, request, pk=None, audio_type='clean'):
